@@ -10,6 +10,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const panelRoutes = require('./routes/panelRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const publicApiRoutes = require('./routes/publicApiRoutes');
+const systemRoutes = require('./routes/systemRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/admin', adminRoutes);        // الأدمن فقط: سبورت، 
 app.use('/api/panel', panelRoutes);        // مشترك (أدمن+سبورت بصلاحيات): عملاء، شات، شحن، اكتشف عطل
 app.use('/api/client', clientRoutes);      // لوحة العميل نفسه
 app.use('/api/v1', publicApiRoutes);       // الـ API العام لإرسال/تأكيد OTP (لموقع العميل)
+app.use('/api/system', systemRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'otp-provider-backend' }));
 
