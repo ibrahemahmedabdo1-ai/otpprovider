@@ -24,20 +24,20 @@ async function runSeed() {
         diagnoseFaults: true,
       },
     });
-    log.push(تم إنشاء حساب الأدمن: ${adminEmail} / ChangeMe123!);
+    log.push('Admin account created: ' + adminEmail + ' / ChangeMe123!');
   } else {
-    log.push('حساب الأدمن موجود بالفعل');
+    log.push('Admin account already exists');
   }
 
   const packagesCount = await Package.count();
   if (packagesCount === 0) {
     await Package.bulkCreate([
-      { name: 'باقة البداية - واتساب', channelType: 'whatsapp', messageCount: 500, price: 20, description: '500 رسالة تحقق عبر واتساب' },
-      { name: 'باقة البداية - إيميل', channelType: 'email', messageCount: 1000, price: 10, description: '1000 رسالة تحقق عبر البريد الإلكتروني' },
-      { name: 'باقة البداية - SMS', channelType: 'sms', messageCount: 300, price: 25, description: '300 رسالة تحقق عبر SMS' },
-      { name: 'الباقة الشاملة', channelType: 'all', messageCount: 1000, price: 45, description: '1000 رسالة على كل القنوات' },
+      { name: 'Starter Package - WhatsApp', channelType: 'whatsapp', messageCount: 500, price: 20, description: '500 WhatsApp verification messages' },
+      { name: 'Starter Package - Email', channelType: 'email', messageCount: 1000, price: 10, description: '1000 email verification messages' },
+      { name: 'Starter Package - SMS', channelType: 'sms', messageCount: 300, price: 25, description: '300 SMS verification messages' },
+      { name: 'Full Package', channelType: 'all', messageCount: 1000, price: 45, description: '1000 messages across all channels' },
     ]);
-    log.push('تم إنشاء باكدجات تجريبية');
+    log.push('Sample packages created');
   }
 
   const channelsCount = await Channel.count();
@@ -47,7 +47,7 @@ async function runSeed() {
       { type: 'email', identifier: 'no-reply@otpprovider.com', provider: 'smtp', assignmentMode: 'shared', status: 'active' },
       { type: 'sms', identifier: '+1234567890', provider: 'twilio', assignmentMode: 'shared', status: 'active' },
     ]);
-    log.push('تم إنشاء قنوات تجريبية');
+    log.push('Sample channels created');
   }
 
   return log;
