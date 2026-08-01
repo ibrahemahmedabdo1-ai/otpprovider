@@ -1,6 +1,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// استدعاء صريح لمكتبة pg عشان أدوات البناء (زي @vercel/node) تكتشفها
+// وتضمّها في الحزمة النهائية - Sequelize بيستدعيها ديناميكيًا وده بيخلي
+// أدوات التحليل الساكن (static analysis) متلاقيهاش من غير الاستدعاء الصريح ده
+require('pg');
+
 const dialect = process.env.DB_DIALECT || 'sqlite';
 
 let sequelize;
@@ -18,13 +23,12 @@ if (dialect === 'postgres') {
       dialectOptions: {
         ssl: {
           require: true,
-          rejectUnauthorized: false, // مطلوب لأغلب مزودي Postgres السحابية زي Neon
+          rejectUnauthorized: false,
         },
       },
     }
   );
 } else {
-  // SQLite - مناسب للتشغيل المحلي والتجربة بدون إعداد قاعدة بيانات خارجية
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: process.env.DB_STORAGE || './database.sqlite',
