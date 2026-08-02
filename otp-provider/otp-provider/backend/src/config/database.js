@@ -23,12 +23,23 @@ if (dialect === 'postgres') {
       dialectOptions: {
         ssl: {
           require: true,
-          rejectUnauthorized: false,
+          rejectUnauthorized: false, // مطلوب لأغلب مزودي Postgres السحابية زي Neon
         },
+        connectTimeout: 30000, // مهلة أطول لإعطاء وقت لقاعدة بيانات Neon تصحى من وضع السكون
+      },
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+      retry: {
+        max: 3, // إعادة محاولة الاتصال تلقائيًا لو فشل أول مرة
       },
     }
   );
 } else {
+  // SQLite - مناسب للتشغيل المحلي والتجربة بدون إعداد قاعدة بيانات خارجية
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: process.env.DB_STORAGE || './database.sqlite',
