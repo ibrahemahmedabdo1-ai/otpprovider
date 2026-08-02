@@ -15,16 +15,24 @@ const systemRoutes = require('./routes/systemRoutes');
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+
+// إعدادات CORS: تسمح بالطلبات من أي دومين (مناسب أثناء التطوير والتجربة)
+// لو حبيت تقيّدها لاحقًا على دومينات محددة بس، غيّر origin: true لمصفوفة روابطك
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
+app.options('*', cors());
+
 app.use(express.json());
 app.use(morgan('dev'));
 
 // ===== الراوتس =====
-app.use('/api/auth', authRoutes);          // تسجيل دخول الأدمن/السبورت/العميل
-app.use('/api/admin', adminRoutes);        // الأدمن فقط: سبورت، باكدجات، قنوات
-app.use('/api/panel', panelRoutes);        // مشترك (أدمن+سبورت بصلاحيات): عملاء، شات، شحن، اكتشف عطل
-app.use('/api/client', clientRoutes);      // لوحة العميل نفسه
-app.use('/api/v1', publicApiRoutes);       // الـ API العام لإرسال/تأكيد OTP (لموقع العميل)
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/panel', panelRoutes);
+app.use('/api/client', clientRoutes);
+app.use('/api/v1', publicApiRoutes);
 app.use('/api/system', systemRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'otp-provider-backend' }));
@@ -41,11 +49,11 @@ const PORT = process.env.PORT || 4000;
 async function start() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync(); // في الإنتاج يُفضّل استخدام migrations بدلاً من sync
+    await sequelize.sync();
     console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
 
     app.listen(PORT, () => {
-      console.log(`🚀 السيرفر شغال على http://localhost:${PORT}`);
+      console.log(🚀 السيرفر شغال على http://localhost:${PORT});
     });
   } catch (err) {
     console.error('❌ فشل الاتصال بقاعدة البيانات:', err);
