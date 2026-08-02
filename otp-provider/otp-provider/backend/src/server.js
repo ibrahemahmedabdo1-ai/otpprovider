@@ -16,8 +16,6 @@ const app = express();
 
 app.use(helmet());
 
-// إعدادات CORS: تسمح بالطلبات من أي دومين (مناسب أثناء التطوير والتجربة)
-// لو حبيت تقيّدها لاحقًا على دومينات محددة بس، غيّر origin: true لمصفوفة روابطك
 app.use(cors({
   origin: true,
   credentials: true,
@@ -44,23 +42,44 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'خطأ داخلي في السيرفر' });
 });
 
-const PORT = process.env.PORT || 4000;
-
-async function start() {
-  try {
-    await sequelize.authenticate();
-    await sequelize.sync();
-    console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
-
-    app.listen(PORT, () => {
-      console.log(🚀 السيرفر شغال على http://localhost:${PORT});
-    });
-  } catch (err) {
-    console.error('❌ فشل الاتصال بقاعدة البيانات:', err);
-    process.exit(1);
+// نتأكد من الاتصال بقاعدة البيانات مرة واحدة فقط، سواء محليًا أو على Vercel
+let dbReadyPromise = null;
+function ensureDatabaseReady() {
+  if (!dbReadyPromise) {
+    dbReadyPromise = sequelize.authenticate().then(() => sequelize.sync());
   }
+  return dbReadyPromise;
 }
 
-start();
+// بيئة Vercel Serverless: بيحدد المتغير ده تلقائيًا، فمينفعش نستخدم app.listen() هنا
+// لأن Vercel بياخد الـ app نفسها ويستخدمها كـ handler مباشرة لكل طلب
+const isServerless = !!process.env.VERCEL;
+
+if (isServerless) {
+  // نتأكد من جاهزية قاعدة البيانات قبل أي طلب (كاش بعد أول مرة)
+  app.use(async (req, res, next) => {
+    try {
+      await ensureDatabaseReady();
+      next();
+    } catch (err) {
+      console.error('❌ فشل الاتصال بقاعدة البيانات:', err);
+      res.status(500).json({ error: 'فشل الاتصال بقاعدة البيانات' });
+    }
+  });
+} else {
+  // تشغيل محلي أو على سيرفر تقليدي (Render/Railway/VPS)
+  const PORT = process.env.PORT || 4000;
+  ensureDatabaseReady()
+    .then(() => {
+      console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
+      app.listen(PORT, () => {
+        console.log(🚀 السيرفر شغال على http://localhost:${PORT});
+      });
+    })
+    .catch((err) => {
+      console.error('❌ فشل الاتصال بقاعدة البيانات:', err);
+      process.exit(1);
+    });
+}
 
 module.exports = app;
