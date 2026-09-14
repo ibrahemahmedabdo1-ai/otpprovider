@@ -16,7 +16,7 @@ export async function createOtpRequest(params: {
   isTest?: boolean;
   metadata?: Record<string, unknown>;
 }) {
-  const { channel, recipient, userId, apiKeyId, isTest = false, metadata } = params;
+  const { channel, recipient, userId, isTest = false, metadata } = params;
 
   // Rate limit by recipient
   const recent = await prisma.otpLog.count({
@@ -44,9 +44,7 @@ export async function createOtpRequest(params: {
       status: "QUEUED",
       isTest,
       maxAttempts: MAX_ATTEMPTS,
-      metadata: (metadata || {}) as any,
-      expiresAt,
-    },
+      metadata: JSON.parse(JSON.stringify(metadata || {})),    },
   });
 
   // In production: enqueue to BullMQ / send via provider
@@ -161,3 +159,4 @@ export async function getOtpStatus(requestId: string) {
   if (!log) return null;
   return log;
 }
+

@@ -1,7 +1,5 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
 const publicPaths = ["/", "/login", "/register", "/docs", "/api/auth", "/api/v1/otp"];
 const rolePaths: Record<string, string[]> = {
   SUPER_ADMIN: ["/admin"],
@@ -55,3 +53,7 @@ export default auth((req) => {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
+
+
+
+

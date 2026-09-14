@@ -67,7 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             failedLoginAttempts: 0,
             lockedUntil: null,
             lastLoginAt: new Date(),
-            status: user.status === "LOCKED" ? "ACTIVE" : user.status,
+            status: "ACTIVE",
           },
         });
 

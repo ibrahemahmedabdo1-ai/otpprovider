@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -10,9 +10,9 @@ export async function createApiKey(formData: FormData) {
   const session = await requireAuth();
   const name = (formData.get("name") as string)?.trim() || "Default Key";
 
-  const prefix = `otp_${randomBytes(4).toString("hex")}`;
+  const prefix = "otp_" + randomBytes(4).toString("hex");
   const secret = randomBytes(24).toString("hex");
-  const fullKey = `${prefix}_${secret}`;
+  const fullKey = prefix + "_" + secret;
   const keyHash = await hash(fullKey, 10);
 
   await prisma.apiKey.create({
@@ -36,15 +36,27 @@ export async function createApiKey(formData: FormData) {
   });
 
   revalidatePath("/customer/api-keys");
-  return { success: true, key: fullKey, prefix };
+
+  return {
+    success: true,
+    key: fullKey,
+    prefix,
+  };
 }
 
 export async function revokeApiKey(keyId: string) {
   const session = await requireAuth();
+
   const key = await prisma.apiKey.findFirst({
-    where: { id: keyId, userId: session.user.id },
+    where: {
+      id: keyId,
+      userId: session.user.id,
+    },
   });
-  if (!key) return { error: "NOT_FOUND" };
+
+  if (!key) {
+    return { error: "NOT_FOUND" };
+  }
 
   await prisma.apiKey.update({
     where: { id: keyId },
@@ -62,5 +74,10 @@ export async function revokeApiKey(keyId: string) {
   });
 
   revalidatePath("/customer/api-keys");
-  return { success: true };
+
+  return {
+    success: true,
+  };
 }
+
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 export function LanguageSwitcher({
@@ -11,8 +11,6 @@ export function LanguageSwitcher({
   onChange?: (l: "ar" | "en") => void;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-
   const toggle = useCallback(() => {
     const next = locale === "ar" ? "en" : "ar";
     if (onChange) {
@@ -34,3 +32,8 @@ export function LanguageSwitcher({
     </button>
   );
 }
+
+
+
+
+
