@@ -44,7 +44,7 @@ export async function createOtpRequest(params: {
       status: "QUEUED",
       isTest,
       maxAttempts: MAX_ATTEMPTS,
-      metadata: metadata || {},
+      metadata: (metadata || {}) as any,
       expiresAt,
     },
   });
