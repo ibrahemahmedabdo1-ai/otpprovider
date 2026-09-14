@@ -1,0 +1,645 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  SALES
+  MARKETING
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+  LOCKED
+}
+
+enum OtpChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum OtpStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  VERIFIED
+  EXPIRED
+  CANCELLED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProviderType {
+  WHATSAPP_CLOUD
+  WHATSAPP_BUSINESS
+  WHATSAPP_EXTERNAL
+  SMTP
+  OTHER
+}
+
+enum ProviderStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  MAINTENANCE
+}
+
+enum CreditType {
+  PRODUCTION
+  TEST
+}
+
+enum TransactionType {
+  PURCHASE
+  USAGE
+  BONUS
+  REFUND
+  ADJUSTMENT
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentMethodType {
+  CARD
+  PAYPAL
+  BINANCE
+  USDT
+  BITCOIN
+  BANK_TRANSFER
+  MANUAL
+}
+
+enum TemplateStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum TemplateType {
+  OTP
+  WELCOME
+  PASSWORD_RESET
+  TICKET
+  SUPPORT
+  NOTIFICATION
+}
+
+enum PasswordAction {
+  INITIAL_PASSWORD_SET
+  PASSWORD_CHANGED
+  ADMIN_PASSWORD_RESET
+  FORCED_PASSWORD_RESET
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  CREATE_USER
+  UPDATE_USER
+  DELETE_USER
+  DISABLE_USER
+  ENABLE_USER
+  PASSWORD_CHANGED
+  ADMIN_PASSWORD_RESET
+  CREATE_API_KEY
+  REVOKE_API_KEY
+  ROTATE_API_KEY
+  CREATE_TICKET
+  UPDATE_TICKET
+  ESCALATE_TICKET
+  CREATE_MEETING
+  UPDATE_MEETING
+  CANCEL_MEETING
+  UPDATE_PROVIDER
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  CREATE_PACKAGE
+  UPDATE_SETTINGS
+  SEND_OTP
+  VERIFY_OTP
+  RATE_LIMIT_EXCEEDED
+  SUSPICIOUS_ACTIVITY
+}
+
+enum NotificationType {
+  TICKET
+  PAYMENT
+  MEETING
+  OTP
+  SECURITY
+  SYSTEM
+}
+
+enum ErrorStatus {
+  OPEN
+  RESOLVED
+}
+
+enum HealthStatus {
+  HEALTHY
+  WARNING
+  FAILED
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  name              String?
+  passwordHash      String
+  role              Role       @default(CUSTOMER)
+  status            UserStatus @default(ACTIVE)
+  phone             String?
+  avatar            String?
+  locale            String     @default("ar")
+  theme             String     @default("system")
+  emailVerified     DateTime?
+  forcePasswordReset Boolean   @default(false)
+  passwordChangedAt DateTime?
+  failedLoginAttempts Int      @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  credits           Int        @default(0)
+  testCredits       Int        @default(10)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  passwordEvents    PasswordEvent[] @relation("UserPasswordEvents")
+  passwordEventsBy  PasswordEvent[] @relation("ChangedByPasswordEvents")
+  auditLogs         AuditLog[]      @relation("UserAuditLogs")
+  auditLogsBy       AuditLog[]      @relation("ActorAuditLogs")
+  apiKeys           ApiKey[]
+  tickets           Ticket[]        @relation("CustomerTickets")
+  assignedTickets   Ticket[]        @relation("AssignedTickets")
+  ticketMessages    TicketMessage[]
+  meetingsCreated   Meeting[]       @relation("MeetingCreator")
+  meetingParticipants MeetingParticipant[]
+  otpLogs           OtpLog[]
+  creditsTransactions CreditsTransaction[]
+  notifications     Notification[]
+  sessions          Session[]
+  payments          Payment[]
+  whatsappAccounts  WhatsAppAccount[]
+  botConversations  BotConversation[]
+  templates         MessageTemplate[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordEvent {
+  id          String         @id @default(cuid())
+  userId      String
+  changedById String?
+  action      PasswordAction
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime       @default(now())
+
+  user        User           @relation("UserPasswordEvents", fields: [userId], references: [id], onDelete: Cascade)
+  changedBy   User?          @relation("ChangedByPasswordEvents", fields: [changedById], references: [id])
+
+  @@index([userId])
+  @@index([changedById])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  actorId   String?
+  action    AuditAction
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  user      User?       @relation("UserAuditLogs", fields: [userId], references: [id])
+  actor     User?       @relation("ActorAuditLogs", fields: [actorId], references: [id])
+
+  @@index([userId])
+  @@index([actorId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  keyPrefix  String
+  keyHash    String
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  status     String    @default("ACTIVE")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyPrefix])
+  @@index([status])
+}
+
+model Provider {
+  id          String         @id @default(cuid())
+  name        String
+  type        ProviderType
+  status      ProviderStatus @default(INACTIVE)
+  priority    Int            @default(0)
+  costPerMsg  Float          @default(0)
+  dailyLimit  Int?
+  settings    Json?
+  credentials Json?
+  lastCheckAt DateTime?
+  healthStatus HealthStatus  @default(HEALTHY)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  otpLogs     OtpLog[]
+  whatsappAccounts WhatsAppAccount[]
+
+  @@index([type])
+  @@index([status])
+  @@index([priority])
+}
+
+model WhatsAppAccount {
+  id           String   @id @default(cuid())
+  userId       String
+  providerId   String?
+  phoneNumber  String
+  displayName  String?
+  status       String   @default("DISCONNECTED")
+  deviceName   String?
+  lastSeenAt   DateTime?
+  sessionData  String?
+  qrCode       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     Provider? @relation(fields: [providerId], references: [id])
+
+  @@index([userId])
+  @@index([phoneNumber])
+  @@index([status])
+}
+
+model OtpLog {
+  id          String     @id @default(cuid())
+  userId      String?
+  apiKeyId    String?
+  providerId  String?
+  channel     OtpChannel
+  recipient   String
+  otpHash     String?
+  requestId   String     @unique
+  status      OtpStatus  @default(QUEUED)
+  isTest      Boolean    @default(false)
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  metadata    Json?
+  error       String?
+  expiresAt   DateTime
+  sentAt      DateTime?
+  verifiedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User?      @relation(fields: [userId], references: [id])
+  provider    Provider?  @relation(fields: [providerId], references: [id])
+
+  @@index([userId])
+  @@index([recipient])
+  @@index([status])
+  @@index([channel])
+  @@index([requestId])
+  @@index([createdAt])
+  @@index([isTest])
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  customerId  String
+  assignedToId String?
+  subject     String
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+  category    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  resolvedAt  DateTime?
+
+  customer    User           @relation("CustomerTickets", fields: [customerId], references: [id])
+  assignedTo  User?          @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  messages    TicketMessage[]
+
+  @@index([customerId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  userId     String
+  message    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model Meeting {
+  id          String        @id @default(cuid())
+  creatorId   String
+  title       String
+  description String?
+  date        DateTime
+  startTime   String
+  endTime     String
+  location    String?
+  meetingUrl  String?
+  notes       String?
+  status      MeetingStatus @default(SCHEDULED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator     User          @relation("MeetingCreator", fields: [creatorId], references: [id])
+  participants MeetingParticipant[]
+
+  @@index([creatorId])
+  @@index([date])
+  @@index([status])
+}
+
+model MeetingParticipant {
+  id        String  @id @default(cuid())
+  meetingId String
+  userId    String
+  status    String  @default("INVITED")
+
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+model Package {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  credits      Int
+  bonusCredits Int      @default(0)
+  price        Float
+  currency     String   @default("USD")
+  status       String   @default("ACTIVE")
+  isPopular    Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payments     Payment[]
+
+  @@index([status])
+  @@index([sortOrder])
+}
+
+model Payment {
+  id            String            @id @default(cuid())
+  userId        String
+  packageId     String?
+  amount        Float
+  currency      String            @default("USD")
+  method        PaymentMethodType
+  status        PaymentStatus     @default(PENDING)
+  proofUrl      String?
+  transactionId String?
+  notes         String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id])
+  package       Package?          @relation(fields: [packageId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentMethod {
+  id        String            @id @default(cuid())
+  type      PaymentMethodType
+  name      String
+  details   Json?
+  status    String            @default("ACTIVE")
+  sortOrder Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([status])
+}
+
+model CreditsTransaction {
+  id        String          @id @default(cuid())
+  userId    String
+  amount    Int
+  type      CreditType
+  reason    TransactionType
+  reference String?
+  balanceAfter Int
+  createdAt DateTime        @default(now())
+
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model MessageTemplate {
+  id          String         @id @default(cuid())
+  userId      String?
+  type        TemplateType
+  name        String
+  channel     OtpChannel?
+  subject     String?
+  body        String
+  variables   String[]
+  status      TemplateStatus @default(DRAFT)
+  version     Int            @default(1)
+  previousBody String?
+  approvedById String?
+  approvedAt  DateTime?
+  rejectedReason String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user        User?          @relation(fields: [userId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model NewsItem {
+  id        String   @id @default(cuid())
+  titleAr   String
+  titleEn   String
+  contentAr String?
+  contentEn String?
+  link      String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model ErrorEvent {
+  id          String      @id @default(cuid())
+  source      String
+  message     String
+  fingerprint String
+  stack       String?
+  metadata    Json?
+  status      ErrorStatus @default(OPEN)
+  count       Int         @default(1)
+  lastSeenAt  DateTime    @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([status])
+  @@index([fingerprint])
+  @@index([createdAt])
+}
+
+model HealthCheck {
+  id        String       @id @default(cuid())
+  service   String
+  status    HealthStatus
+  message   String?
+  latencyMs Int?
+  checkedAt DateTime     @default(now())
+
+  @@index([service])
+  @@index([checkedAt])
+}
+
+model BotConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  messages  Json
+  resolved  Boolean  @default(false)
+  escalated Boolean  @default(false)
+  ticketId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([escalated])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Country {
+  id        String @id @default(cuid())
+  code      String @unique
+  nameAr    String
+  nameEn    String
+  phoneCode String
+  isActive  Boolean @default(true)
+}
