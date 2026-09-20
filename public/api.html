@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>توثيق API — OTP Provider</title>
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/landing.css">
+<style>
+  body.page-landing pre{
+    background:#020e1c;border:1px solid #0b4779;border-radius:10px;padding:16px;
+    overflow-x:auto;font-size:12px;line-height:1.7;color:#cfe6ff;direction:ltr;text-align:left;
+  }
+  body.page-landing code{color:#25c7ff;}
+  body.page-landing .doc-card{
+    border:1px solid #0b4779;border-radius:12px;background:linear-gradient(145deg,rgba(6,31,57,.8),rgba(2,17,34,.85));
+    padding:22px;margin-bottom:18px;
+  }
+  body.page-landing .doc-card h3{margin:0 0 10px;font-size:16px;}
+  body.page-landing .method-tag{
+    display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;
+    background:linear-gradient(90deg,#159cff,#765cff);margin-inline-end:8px;
+  }
+  body.page-landing table{margin-top:10px;}
+</style>
+</head>
+<body class="page-landing">
+
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a href="/" class="brand">
+        <span class="brand-icon">✓</span>
+        <span class="brand-text"><b>OTP<span>Provider</span></b><small>Secure · Fast · Global</small></span>
+      </a>
+      <nav class="main-nav">
+        <a href="/" data-i18n="nav_home">الرئيسية</a>
+        <a href="/#services" data-i18n="nav_services">الخدمات</a>
+        <a href="/#packages" data-i18n="nav_packages">الباقات</a>
+        <a href="/api.html" class="active" data-i18n="nav_api">API</a>
+        <a href="/#about" data-i18n="nav_about">من نحن</a>
+        <a href="/#contact" data-i18n="nav_contact">تواصل معنا</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="/login.html" class="btn btn-outline" data-i18n="nav_login">تسجيل الدخول</a>
+        <a href="/register.html" class="btn btn-primary" data-i18n="nav_register">حساب جديد</a>
+      </div>
+    </div>
+  </header>
+
+  <section style="padding:50px 0 10px;">
+    <div class="container">
+      <div class="section-heading">
+        <div class="eyebrow">API</div>
+        <h2>توثيق API — إرسال OTP مباشرة من تطبيقك</h2>
+        <p>مفتاح واحد، طلب واحد، وحساب خصم رصيد فوري وشفاف حسب قاعدة التسعير الحالية.</p>
+      </div>
+
+      <div class="doc-card">
+        <h3>🔑 المصادقة</h3>
+        <p style="color:var(--l-muted);font-size:13px;">
+          كل حساب عميل يقدر يولّد مفتاحين من لوحة التحكم ← <b>API Keys</b>: مفتاح <code>test</code> (للتجربة، مالوش قيمة مالية ومستهلكش رصيدك الحقيقي)
+          ومفتاح <code>production</code> (بيستهلك رصيدك الفعلي بعد شحن باكدج). ابعت المفتاح في الهيدر:
+        </p>
+        <pre>Authorization: Bearer otpp_live_xxxxxxxxxxxxxxxxxxxx</pre>
+      </div>
+
+      <div class="doc-card">
+        <span class="method-tag">POST</span><code>/v1/otp/send</code>
+        <p style="color:var(--l-muted);font-size:13px;margin-top:8px;">إرسال رمز تحقق عبر واتساب أو إيميل، وخصم الرصيد المطلوب تلقائيًا حسب قاعدة التسعير الحالية للقناة.</p>
+        <pre>curl -X POST https://YOUR-DOMAIN/v1/otp/send \
+  -H "Authorization: Bearer otpp_live_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "whatsapp",
+    "recipient": "+201234567890"
+  }'</pre>
+        <pre>// Node.js
+const res = await fetch("https://YOUR-DOMAIN/v1/otp/send", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer otpp_live_xxxxxxxxxxxx",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ channel: "whatsapp", recipient: "+201234567890" })
+});
+const data = await res.json();</pre>
+
+        <table>
+          <thead><tr><th>الحقل</th><th>مطلوب</th><th>الوصف</th></tr></thead>
+          <tbody>
+            <tr><td>channel</td><td>نعم</td><td>whatsapp أو email (المزيد قريبًا: SMS, Telegram, Voice)</td></tr>
+            <tr><td>recipient</td><td>نعم</td><td>رقم الهاتف بصيغة دولية أو البريد الإلكتروني</td></tr>
+            <tr><td>country</td><td>اختياري</td><td>لتطبيق تسعير خاص بدولة معينة لو مفعّل من الأدمن</td></tr>
+          </tbody>
+        </table>
+
+        <p style="color:var(--l-muted);font-size:12px;margin-top:12px;">
+          الرد يشمل: <code>ok</code>, <code>creditsCharged</code>, <code>remainingBalance</code>, <code>verificationId</code>.
+          لو فشل الإرسال فعليًا يتم استرداد الرصيد المخصوم تلقائيًا في نفس الطلب.
+        </p>
+      </div>
+
+      <div class="doc-card">
+        <h3>💳 التسعير</h3>
+        <p style="color:var(--l-muted);font-size:13px;">سعر استهلاك الرسالة الواحدة (بالكريدت) لكل قناة — يُحدَّث لحظيًا من لوحة تحكم الأدمن:</p>
+        <table>
+          <thead><tr><th>القناة</th><th>تكلفة الرسالة (كريدت)</th><th>العملة</th></tr></thead>
+          <tbody id="pricingRulesBody"><tr><td colspan="3">جارِ التحميل...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="doc-card">
+        <h3>⚠️ ملاحظات مهمة</h3>
+        <ul style="color:var(--l-muted);font-size:13px;line-height:2;padding-inline-start:20px;">
+          <li>لا يوجد أي مسار يتجاوز محرك التسعير — كل استهلاك رصيد لازم يعدي من <code>/v1/otp/send</code>.</li>
+          <li>مفاتيح <code>test</code> لا تستهلك رصيدًا حقيقيًا ولا يُسمح باستخدامها في بيئة إنتاج.</li>
+          <li>كل عملية إرسال وخصم رصيد تُسجَّل في سجل حركة الرصيد (Ledger) ويمكن مراجعتها من لوحة التحكم.</li>
+        </ul>
+      </div>
+
+      <div class="cta-box" style="margin:30px auto 10px;">
+        <h2>جاهز تبدأ التكامل؟</h2>
+        <p>ابدأ الآن مجانًا وولّد مفتاح test فورًا من لوحة التحكم.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <a href="/register.html" class="btn btn-primary">ابدأ الآن →</a>
+          <a href="/#packages" class="btn btn-outline">شراء رصيد</a>
+          <a href="/#contact" class="btn btn-outline">تواصل مع المبيعات</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer" style="margin-top:20px;">
+    <div class="footer-bottom" style="border-top:none;">
+      <span>© <span id="footerYear"></span> OTP Provider</span>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/i18n.js"></script>
+  <script>
+    document.getElementById("footerYear").textContent = new Date().getFullYear();
+    (async () => {
+      try {
+        const rules = await apiFetch("/pricing-rules");
+        const labels = { whatsapp: "واتساب", email: "إيميل" };
+        document.getElementById("pricingRulesBody").innerHTML = rules.map(r => `
+          <tr><td>${labels[r.channel] || r.channel}</td><td>${r.creditCost}</td><td>${r.currency}</td></tr>
+        `).join("") || "<tr><td colspan=\"3\">لا توجد قواعد تسعير مفعّلة حاليًا</td></tr>";
+      } catch (e) {
+        document.getElementById("pricingRulesBody").innerHTML = "<tr><td colspan=\"3\">تعذّر تحميل الأسعار</td></tr>";
+      }
+    })();
+  </script>
+</body>
+</html>

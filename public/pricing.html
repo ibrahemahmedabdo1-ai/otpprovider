@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الأسعار — OTP Provider</title>
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/landing.css">
+<style>
+  body.page-landing .calc-card{
+    border:1px solid #0b4779;border-radius:14px;background:linear-gradient(145deg,rgba(6,31,57,.8),rgba(2,17,34,.85));
+    padding:24px;max-width:560px;margin:0 auto 50px;
+  }
+  body.page-landing .calc-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  body.page-landing .calc-row select,
+  body.page-landing .calc-row input{
+    flex:1;min-width:120px;padding:10px 12px;border-radius:8px;border:1px solid var(--l-line);
+    background:#020e1c;color:var(--l-text);font-size:13px;
+  }
+  body.page-landing .calc-result{
+    background:#020e1c;border:1px solid var(--l-line);border-radius:10px;padding:14px;font-size:13px;margin-top:10px;
+  }
+  body.page-landing .calc-result div{display:flex;justify-content:space-between;padding:4px 0;color:var(--l-muted);}
+  body.page-landing .calc-result b{color:var(--l-text);}
+</style>
+</head>
+<body class="page-landing">
+
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a href="/" class="brand">
+        <span class="brand-icon">✓</span>
+        <span class="brand-text"><b>OTP<span>Provider</span></b><small>Secure · Fast · Global</small></span>
+      </a>
+      <nav class="main-nav">
+        <a href="/" data-i18n="nav_home">الرئيسية</a>
+        <a href="/#services" data-i18n="nav_services">الخدمات</a>
+        <a href="/pricing.html" class="active" data-i18n="nav_packages">الباقات</a>
+        <a href="/api.html" data-i18n="nav_api">API</a>
+        <a href="/#about" data-i18n="nav_about">من نحن</a>
+        <a href="/#contact" data-i18n="nav_contact">تواصل معنا</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="/login.html" class="btn btn-outline" data-i18n="nav_login">تسجيل الدخول</a>
+        <a href="/register.html" class="btn btn-primary" data-i18n="nav_register">حساب جديد</a>
+      </div>
+    </div>
+  </header>
+
+  <section style="padding:55px 0 10px;">
+    <div class="container">
+      <div class="section-heading">
+        <div class="eyebrow">التسعير</div>
+        <h2>باقات مرنة، وشفافية كاملة في التكلفة</h2>
+        <p>سعر كل قناة منفصل تمامًا — ادفع فقط على ما تستخدمه، وكل الأسعار تتحدّث لحظيًا من لوحة تحكم الأدمن.</p>
+      </div>
+      <div id="pricingGrid" class="price-grid pricing-page"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-heading">
+        <div class="eyebrow">حاسبة الرصيد</div>
+        <h2>احسب احتياجك بدقة</h2>
+        <p>اختار القناة وعدد الرسائل المطلوبة، والحاسبة هتحسبلك الكريدت المطلوب فورًا من قاعدة التسعير الحالية.</p>
+      </div>
+
+      <div class="calc-card">
+        <div class="calc-row">
+          <select id="calcChannel">
+            <option value="whatsapp">واتساب</option>
+            <option value="email">إيميل</option>
+          </select>
+          <input type="number" id="calcQty" placeholder="عدد الرسائل" value="1000" min="1">
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="runCalc()">احسب الآن</button>
+        <div class="calc-result" id="calcResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h2>جاهز تبدأ التحقق من عملائك؟</h2>
+    <p>ابدأ إرسال رموز OTP الآمنة حول العالم مع OTP Provider.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="/register.html" class="btn btn-primary">ابدأ الآن →</a>
+      <a href="/register.html" class="btn btn-outline">شراء رصيد</a>
+      <a href="/api.html" class="btn btn-outline">API</a>
+      <a href="/#contact" class="btn btn-outline">تواصل مع المبيعات</a>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>OTP Provider</h4>
+        <p data-i18n="footer_about">منصة واحدة لتحقق عملائك عبر واتساب، إيميل وSMS بثقة وسرعة.</p>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_service">الخدمة</h4>
+        <a href="/pricing.html" data-i18n="pricing_title">الأسعار</a>
+        <a href="/register.html" data-i18n="footer_start">ابدأ الآن</a>
+        <a href="/login.html" data-i18n="nav_login">تسجيل الدخول</a>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_channels">القنوات</h4>
+        <a href="/#services" data-i18n="svc_whatsapp_title">واتساب</a>
+        <a href="/#services" data-i18n="svc_email_title">إيميل</a>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_support">الدعم</h4>
+        <a href="/login.html" data-i18n="footer_contact_support">تواصل مع الدعم</a>
+        <a href="/register.html" data-i18n="footer_create_account">إنشاء حساب</a>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_follow">تابعنا</h4>
+        <div class="social">
+          <a href="#" aria-label="Facebook">f</a>
+          <a href="#" aria-label="X">𝕏</a>
+          <a href="#" aria-label="LinkedIn">in</a>
+          <a href="#" aria-label="Telegram">➤</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="footerYear"></span> OTP Provider — <span data-i18n="footer_rights">جميع الحقوق محفوظة</span></span>
+      <span data-i18n="footer_tagline">شريكك الموثوق للتحقق حول العالم</span>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/i18n.js"></script>
+  <script>
+    document.getElementById("footerYear").textContent = new Date().getFullYear();
+    let pricingRules = [];
+
+    (async () => {
+      try {
+        const packages = await apiFetch("/packages");
+        const grid = document.getElementById("pricingGrid");
+        grid.innerHTML = packages.map((p) => `
+          <div class="price-card ${p.popular ? "popular" : ""}">
+            ${p.popular ? '<div class="popular-tag">الأكثر طلبًا</div>' : ""}
+            <span class="chan-tag">${p.credits.toLocaleString()} كريدت</span>
+            <h3>${p.name}</h3>
+            <div class="desc">${p.description || ""}</div>
+            <div class="price">$${p.price} <small>${p.currency}</small></div>
+            <ul style="list-style:none;padding:0;margin:0 0 14px;font-size:11px;color:var(--l-muted);line-height:1.9;">
+              ${(p.features || []).map(f => `<li>✓ ${f}</li>`).join("")}
+            </ul>
+            <a href="/register.html" class="btn btn-primary">ابدأ الآن</a>
+          </div>
+        `).join("");
+      } catch (e) {
+        document.getElementById("pricingGrid").innerHTML = "<p style='color:var(--l-muted)'>تعذّر تحميل الباقات حاليًا</p>";
+      }
+
+      try {
+        pricingRules = await apiFetch("/pricing-rules");
+      } catch (e) { pricingRules = []; }
+    })();
+
+    function runCalc() {
+      const channel = document.getElementById("calcChannel").value;
+      const qty = Number(document.getElementById("calcQty").value) || 0;
+      const rule = pricingRules.find(r => r.channel === channel);
+      const box = document.getElementById("calcResult");
+      if (!rule) { box.innerHTML = "<div>لا توجد قاعدة تسعير مفعّلة لهذه القناة حاليًا</div>"; return; }
+      const requiredCredits = qty * rule.creditCost;
+      const estimatedCost = qty * rule.customerCost;
+      box.innerHTML = `
+        <div><span>الكريدت المطلوب</span><b>${requiredCredits.toLocaleString()}</b></div>
+        <div><span>التكلفة التقريبية</span><b>$${estimatedCost.toFixed(2)} ${rule.currency}</b></div>
+      `;
+    }
+  </script>
+</body>
+</html>
