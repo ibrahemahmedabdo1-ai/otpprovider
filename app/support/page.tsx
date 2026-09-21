@@ -1,0 +1,110 @@
+import { db } from "@/lib/prisma";
+import { requireRoles } from "@/lib/session";
+import { replyTicket, supportBot } from "@/lib/actions";
+
+export default async function SupportPage() {
+  await requireRoles(["SUPER_ADMIN", "ADMIN", "SUPPORT"]);
+
+  const tickets = await db.ticket.findMany({
+    orderBy: {
+      updatedAt: "desc",
+    },
+    include: {
+      customer: true,
+      messages: true,
+    },
+  });
+
+  return (
+    <div className="dash">
+      <aside className="side">
+        <a href="/admin">← الإدارة</a>
+        <a href="/tickets">تذاكر العملاء</a>
+        <a href="/errors">فحص النظام</a>
+        <a href="/dashboard">لوحة التحكم</a>
+      </aside>
+
+      <section className="content">
+        <h1>Support Center</h1>
+
+        <div className="card" style={{ marginBottom: 20 }}>
+          <h2>🤖 Support Bot</h2>
+
+          <p className="muted">
+            ردود تلقائية للمشاكل الشائعة مع إمكانية تصعيد المشكلة إلى فريق الدعم.
+          </p>
+
+          <form action={async(f:FormData)=>{'use server';await supportBot(f)}}>
+            <input
+              type="text"
+              name="text"
+              placeholder="اكتب المشكلة..."
+              required
+            />
+
+            <button className="btn" type="submit">
+              اسأل البوت
+            </button>
+          </form>
+
+          <div style={{ marginTop: 12 }}>
+            <a className="btn alt" href="/tickets">
+              فتح تذكرة دعم
+            </a>
+          </div>
+        </div>
+
+        <div className="grid">
+          {tickets.length === 0 ? (
+            <div className="card">
+              <h3>لا توجد تذاكر حاليًا</h3>
+              <p className="muted">
+                ستظهر تذاكر العملاء هنا عند إنشائها.
+              </p>
+            </div>
+          ) : (
+            tickets.map((ticket) => (
+              <div className="card" key={ticket.id}>
+                <span className="pill">{ticket.priority}</span>
+
+                <h3>{ticket.subject}</h3>
+
+                <p className="muted">
+                  {ticket.customer.email} · {ticket.status}
+                </p>
+
+                <p>{ticket.message}</p>
+
+                <div>
+                  {ticket.messages.slice(-3).map((message) => (
+                    <div className="notice" key={message.id}>
+                      {message.body}
+                    </div>
+                  ))}
+                </div>
+
+                <form action={replyTicket}>
+                  <input
+                    type="hidden"
+                    name="ticketId"
+                    value={ticket.id}
+                  />
+
+                  <textarea
+                    name="body"
+                    placeholder="اكتب رد فريق الدعم..."
+                    required
+                  />
+
+                  <button className="btn" type="submit">
+                    رد وإسناد
+                  </button>
+                </form>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}

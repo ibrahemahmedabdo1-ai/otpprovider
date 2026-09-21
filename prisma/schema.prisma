@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  SALES
+  MARKETING
+  CUSTOMER
+}
+
+enum ServiceType {
+  WHATSAPP
+  EMAIL
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id               String       @id @default(cuid())
+  email            String       @unique
+  name             String
+  passwordHash     String
+  role             Role         @default(CUSTOMER)
+  status           UserStatus   @default(ACTIVE)
+  credits          Int          @default(0)
+  testCredits      Int          @default(0)
+  emailVerifiedAt  DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  tickets          Ticket[]     @relation("CustomerTickets")
+  assignedTickets  Ticket[]     @relation("AssignedTickets")
+  passwordEvents   PasswordEvent[]
+  auditLogs        AuditLog[]
+  apiKeys          ApiKey[]
+  otpLogs          OtpLog[]
+  otpVerifications OtpVerification[]
+  meetings         MeetingParticipant[]
+}
+
+model PasswordEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  changedById String?
+  action      String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Country {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  nameEn          String
+  nameAr          String
+  flag            String
+  phoneCode       String
+  currency        String
+  whatsappCredits Float    @default(0)
+  emailCredits    Float    @default(0)
+  enabled         Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Package {
+  id            String  @id @default(cuid())
+  nameEn        String
+  nameAr        String
+  credits       Int
+  bonusCredits  Int     @default(0)
+  price         Float
+  currency      String  @default("USD")
+  validityDays  Int     @default(30)
+  whatsapp      Boolean @default(true)
+  email         Boolean @default(true)
+  popular       Boolean @default(false)
+  enabled       Boolean @default(true)
+  sortOrder     Int     @default(0)
+}
+
+model Provider {
+  id          String      @id @default(cuid())
+  name        String
+  service     ServiceType
+  enabled     Boolean     @default(false)
+  priority    Int         @default(1)
+  countries   String      @default("")
+  cost        Float       @default(0)
+  configJson  String      @default("{}")
+  createdAt   DateTime    @default(now())
+}
+
+model PaymentMethod {
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  enabled      Boolean  @default(false)
+  currency     String   @default("USD")
+  fee          Float    @default(0)
+  instructions String   @default("")
+  configJson   String   @default("{}")
+  sortOrder    Int      @default(0)
+}
+
+model NewsItem {
+  id        String  @id @default(cuid())
+  titleEn   String
+  titleAr   String
+  url       String?
+  enabled   Boolean @default(true)
+  speed     Int     @default(30)
+  sortOrder Int     @default(0)
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  keyHash    String    @unique
+  mode       String    @default("test")
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OtpLog {
+  id          String       @id @default(cuid())
+  userId      String?
+  service     ServiceType
+  recipient   String
+  status      String
+  provider    String?
+  countryCode String?
+  credits     Float        @default(0)
+  isTest      Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+
+model OtpVerification {
+  id            String   @id @default(cuid())
+  userId        String
+  apiKeyId      String
+  channel       ServiceType
+  recipient     String
+  codeHash      String
+  attempts      Int      @default(0)
+  status        String   @default("PENDING")
+  expiresAt     DateTime
+  verifiedAt    DateTime?
+  credits       Float    @default(0)
+  isTest        Boolean  @default(true)
+  provider      String?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id           String         @id @default(cuid())
+  subject      String
+  message      String
+  status       TicketStatus   @default(OPEN)
+  priority     TicketPriority @default(MEDIUM)
+  customerId   String
+  assignedToId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  customer     User           @relation("CustomerTickets", fields: [customerId], references: [id], onDelete: Cascade)
+  assignedTo   User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages     TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  senderId  String
+  body      String
+  internal  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id           String              @id @default(cuid())
+  title        String
+  description  String?
+  startsAt     DateTime
+  endsAt       DateTime
+  location     String?
+  meetingUrl   String?
+  createdById  String
+  createdAt    DateTime            @default(now())
+  participants MeetingParticipant[]
+}
+
+model MeetingParticipant {
+  id        String   @id @default(cuid())
+  meetingId String
+  userId    String
+  status    String   @default("INVITED")
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([meetingId, userId])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  type      String   @default("text")
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  metadata  String?
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model ErrorEvent {
+  id          String   @id @default(cuid())
+  severity    String
+  source      String
+  message     String
+  status      String   @default("OPEN")
+  fingerprint String?
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+  resolvedById String?
+}
