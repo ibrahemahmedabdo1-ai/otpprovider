@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f6f7fb; --fg: #0f172a; --muted: #64748b; --card: rgba(255,255,255,.8); --border: rgba(15,23,42,.08);
+  --accent: #4f46e5; --accent2: #06b6d4; --ok: #059669; --warn: #d97706; --bad: #dc2626;
+}
+.dark {
+  --bg: #070b16; --fg: #e5e9f5; --muted: #8b95b0; --card: rgba(17,24,39,.72); --border: rgba(255,255,255,.08);
+  --accent: #818cf8; --accent2: #22d3ee;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Tahoma, 'Noto Sans Arabic', 'Noto Sans SC', sans-serif; -webkit-font-smoothing: antialiased; }
+[dir='rtl'] body { font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', system-ui, sans-serif; }
+
+.mesh { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.mesh::before, .mesh::after { content: ''; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(90px); opacity: .35; animation: drift 22s ease-in-out infinite alternate; }
+.mesh::before { background: radial-gradient(circle, var(--accent), transparent 60%); top: -25vmax; inset-inline-start: -15vmax; }
+.mesh::after { background: radial-gradient(circle, var(--accent2), transparent 60%); bottom: -30vmax; inset-inline-end: -15vmax; animation-delay: -8s; }
+@keyframes drift { to { transform: translate(8vmax, 6vmax) scale(1.15); } }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; backdrop-filter: blur(14px); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px -16px rgba(0,0,0,.18); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1rem; border-radius: 12px; font-weight: 600; font-size: .875rem; transition: transform .15s, box-shadow .2s, background .2s; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; box-shadow: 0 8px 20px -8px var(--accent); }
+.btn-primary:hover { box-shadow: 0 12px 26px -8px var(--accent); transform: translateY(-1px); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--fg); }
+.btn-ghost:hover { background: var(--border); }
+.btn-danger { background: var(--bad); color: #fff; }
+.btn-ok { background: var(--ok); color: #fff; }
+.btn-sm { padding: .3rem .65rem; font-size: .75rem; border-radius: 9px; }
+.input { width: 100%; padding: .6rem .85rem; border-radius: 12px; background: transparent; border: 1px solid var(--border); color: var(--fg); font-size: .9rem; outline: none; transition: border .15s, box-shadow .15s; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+select.input option { background: var(--bg); color: var(--fg); }
+.label { display: block; font-size: .75rem; font-weight: 600; color: var(--muted); margin-bottom: .3rem; }
+.badge { display: inline-flex; align-items: center; padding: .12rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; letter-spacing: .02em; }
+.b-ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.b-warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.b-bad { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+.b-mute { background: var(--border); color: var(--muted); }
+.table { width: 100%; font-size: .85rem; border-collapse: collapse; }
+.table th { text-align: start; color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; padding: .6rem .75rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table td { padding: .6rem .75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.grad-text { background: linear-gradient(120deg, var(--accent), var(--accent2), #a855f7); background-size: 200% 200%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient 8s ease infinite; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
