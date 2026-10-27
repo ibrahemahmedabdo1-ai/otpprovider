@@ -1,0 +1,23 @@
+# ===== ملف محلي فقط: غيّر اسمه إلى .env ولا ترفعه على GitHub أبداً =====
+
+# --- Neon PostgreSQL ---
+# Pooled (فيه -pooler): يستخدمه التطبيق
+DATABASE_URL="postgresql://neondb_owner:npg_ul5xaRo8DcSm@ep-hidden-wildflower-b18d77pw-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+# Direct (بدون -pooler): يستخدمه prisma db push
+DIRECT_URL="postgresql://neondb_owner:npg_ul5xaRo8DcSm@ep-hidden-wildflower-b18d77pw.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+
+# --- Security ---
+APP_SECRET="b4b8a2bae34249c27283cc573bc68c5e18628bb4a9ea580baba7d683aa9401b6"
+ENCRYPTION_KEY="f726c59a887fca64931aed57acdf0dfcf1a67e9028e6b2831bb79ff1be2e66f2"
+CRON_SECRET="3f88f9abb4312b1053352235c6caa7d986d0d7e680a5b8dd977c3ea16b336eae"
+
+# --- Public URL ---
+APP_URL="https://otpprovider.com"
+
+# --- Email (Resend): اتركه فارغاً وأضفه من Admin > Email ---
+RESEND_API_KEY=""
+RESEND_FROM="OTPProvider <no-reply@otpprovider.com>"
+
+# --- First Super Admin (يستخدمه npm run db:seed فقط) ---
+SEED_ADMIN_EMAIL="Modylomy275@gmail.com"
+SEED_ADMIN_PASSWORD="Ahmedselem22"
