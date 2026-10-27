@@ -2,7 +2,9 @@ node_modules
 .next
 .env
 .env.local
-*.tsbuildinfo
-next-env.d.ts
-gateway/node_modules
-gateway/.env
+.vercel
+*.log
+.env
+.env.local
+node_modules/
+.next/

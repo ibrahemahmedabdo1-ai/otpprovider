@@ -1,74 +1,16 @@
-# OTPProvider
+# OTPProvider FINAL
 
-منصة OTP متعددة المستأجرين: Email OTP + WhatsApp OTP + Email Validation، مع لوحات (عميل / أدمن / دعم)، محفظة ودفتر حسابات، تذاكر دعم، سجل تدقيق، و7 لغات مع RTL.
-المكدّس: Next.js 14 + TypeScript + Prisma + **Neon** (قاعدة البيانات) + **Vercel** (الاستضافة). لا Railway ولا خدمات أخرى.
+Next.js 14 + Prisma/PostgreSQL customer/admin portal with RBAC, tickets, health center, API key hashing, OTP send/verify endpoints, credit accounting, and official provider integrations.
 
-> ⚠️ هذا المشروع كُتب بدون القدرة على تشغيل `npm install` / `build` في بيئة الكتابة، لذلك **لم يُبنَ ولم تُشغَّل اختباراته قبل التسليم**.
-> شغّل الخطوات بالترتيب، وأي خطأ يظهر في `build` أو `test` ابعته كما هو وسيُصلَح.
+## Environment
+DATABASE_URL, AUTH_SECRET, BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD are required. For live delivery configure TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_WHATSAPP_FROM and/or RESEND_API_KEY/RESEND_FROM_EMAIL.
 
-## 1) التشغيل المحلي
+## Deploy
+`npm install` then `npm run build`, then `npm start`. The build runs Prisma generate/db push/seed.
 
-```bash
-unzip otpprovider.zip && cd otpprovider
-cp .env.example .env
-# ولّد 3 أسرار وضعها في .env (APP_SECRET, ENCRYPTION_KEY, CRON_SECRET):
-openssl rand -hex 32
-npm install
-```
+## API
+POST /api/v1/otp/send
+POST /api/v1/otp/verify
+Use Authorization: Bearer otp_live_... or x-api-key.
 
-في `.env` ضع:
-- `DATABASE_URL` = رابط Neon **pooled** (فيه `-pooler`)، و`DIRECT_URL` = رابط Neon العادي (بدون pooler).
-- `SEED_ADMIN_EMAIL` و`SEED_ADMIN_PASSWORD` (10 حروف+، حرف كبير وصغير ورقم).
-
-```bash
-npm run db:push     # ينشئ الجداول في Neon
-npm run db:seed     # ينشئ السوبر أدمن + الخدمات (مُعطّلة) + 3 باقات تبدأ من 2.99$
-npm test            # اختبارات الوحدة
-npm run build       # لازم ينجح قبل الرفع
-npm run dev         # http://localhost:3000
-```
-
-اختبار قاعدة البيانات الحقيقي (يكتب في القاعدة! استخدم Branch تجريبي من Neon):
-`INTEGRATION=1 npm test`
-
-## 2) GitHub + Vercel + Neon
-1. ارفع المجلد إلى GitHub (`.env` و`node_modules` مستبعدان في `.gitignore`).
-2. Vercel → Add New Project → اختر المستودع (Framework: Next.js تلقائي).
-3. Environment Variables في Vercel: `DATABASE_URL` (pooled), `DIRECT_URL`, `APP_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`, `APP_URL` (رابط موقعك). اختياري: `RESEND_API_KEY`, `RESEND_FROM`, `CONTACT_EMAIL`.
-   - لا تغيّر `ENCRYPTION_KEY` بعد الاستخدام وإلا تتعذر قراءة المفاتيح المشفّرة المحفوظة.
-4. Deploy. جداول Neon أنشأتها محليًا في الخطوة 1 (نفس القاعدة).
-5. الـ Cron اليومي (`vercel.json`) يعمل تلقائيًا ويستخدم `CRON_SECRET`.
-
-## 3) أول دخول (بالترتيب)
-1. سجّل دخول بحساب السوبر أدمن ← يُطلب تغيير كلمة المرور ثم إعداد 2FA (إلزامي للأدمن).
-2. **Admin → Email**: أضف مزوّد Resend (مفتاحك يُحفظ مشفّرًا) ثم أضف Sender بعد توثيق الدومين في Resend، واضغط "Check domains". لا يُعتبر الدومين موثّقًا إلا بنتيجة Resend.
-3. **Admin → WhatsApp**: أضف جهازًا ← انسخ التوكن (يظهر مرة واحدة) ← شغّل البوابة (القسم 4) ← امسح الـ QR.
-4. **Admin → Services**: فعّل الخدمات واضبط الأسعار وقاعدة الفوترة (Accepted / Delivered).
-5. **Admin → Settings**: اكتب بيانات الدفع (USDT/تحويل) التي تظهر للعملاء في المحفظة.
-6. **Admin → Create accounts**: أنشئ أي حساب (عميل / دعم / مالية / أدمن / سوبر أدمن). تظهر كلمة مرور مؤقتة مرة واحدة ويُجبر المستخدم على تغييرها.
-
-## 4) بوابة واتساب من موبايلك (QR)
-انظر `gateway/README.md`. تعمل على Termux أو أي جهاز، وتتصل بموقعك فقط (لا منافذ مفتوحة ولا Railway).
-من الأدمن: إضافة أجهزة متعددة، QR جديد، فصل/إعادة اتصال، إيقاف مؤقت، تعطيل، حد يومي، أولوية، تثبيت عميل على جهاز، رسالة اختبار. التبديل بين الأجهزة تلقائي حسب الأولوية والصحة والحد اليومي.
-
-## 5) ما هو مُنفَّذ
-| المجال | الحالة |
-|---|---|
-| تسجيل/دخول/استعادة كلمة المرور/قفل الحساب/جلسات/2FA | مكتوب |
-| RBAC (5 أدوار + صلاحيات إضافية) وإنشاء كل أنواع الحسابات من الأدمن | مكتوب |
-| API v1 (Email OTP، WhatsApp OTP، Validation، Account) + مفاتيح مجزّأة + rate limit + idempotency | مكتوب |
-| المحفظة: دفتر append-only، قفل صفّي، فوترة idempotent، استرداد بقيد عكسي، طلبات شحن | مكتوب |
-| Email: مزوّدون متعددون + failover آمن (لا إعادة إرسال بعد نتيجة غير مؤكدة) + Webhook Resend موقَّع | مكتوب |
-| WhatsApp: طابور دائم، مطالبة ذرّية، حالات حقيقية فقط، UNKNOWN_OUTCOME بدون إعادة إرسال | مكتوب |
-| دعم: تذاكر، مرفقات (1MB)، ملاحظات داخلية، تصعيد، تعيين | مكتوب |
-| سجل تدقيق، وضع صيانة، health، Cron صيانة | مكتوب |
-| موقع عام + 7 لغات + RTL + أنيميشن + داكن/فاتح | مكتوب (الترجمة تغطي مفردات الواجهة الأساسية؛ الباقي يظهر بالإنجليزية) |
-
-## 6) حدود صريحة (لم تُنفَّذ أو تحتاج منك شيئًا)
-- **لم يُبنَ ولم يُختبر فعليًا** (انظر التحذير أعلاه). لا يوجد دليل تشغيل حتى الآن لأي ادعاء "يعمل".
-- **لا إرسال حقيقي** قبل إضافة مزوّد بريد موثّق وجهاز واتساب متصل.
-- QR عبر جهاز مرتبط = بروتوكول غير رسمي؛ قد يُفصل أو يُحظر الرقم. للإنتاج المضمون انتقل لاحقًا إلى WhatsApp Business Platform.
-- **النسخ الاحتياطي**: على Neon استخدم Point-in-Time Restore/Branching من لوحة Neon، أو `pg_dump "$DIRECT_URL" > backup.sql` وخزّنه خارج Neon. لم تُجرَّب استعادة؛ جرّبها قبل الاعتماد.
-- الدفع يدوي (USDT/تحويل) بموافقة موظف مالية؛ لا بوابة دفع آلية.
-- نص الشروط والخصوصية قوالب عامة تحتاج مراجعة قانونية وبيانات شركتك.
-- Cron على Vercel (Hobby) يومي فقط؛ حالة الأجهزة تُحسب لحظيًا من آخر Heartbeat فلا تعتمد عليه.
+WhatsApp uses the official Twilio WhatsApp API. Personal linked-device QR sessions require a separate persistent worker and are not claimed as supported by this Vercel package.

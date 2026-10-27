@@ -1,50 +1,5 @@
-/* Run once after `prisma db push`:  npm run db:seed
- * Creates the first Super Admin (from SEED_ADMIN_*), the three service rows (all DISABLED) and starter packages.
- * Safe to re-run: existing rows are left untouched. */
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-
-const db = new PrismaClient();
-
-async function main() {
-  const email = (process.env.SEED_ADMIN_EMAIL || '').trim().toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD || '';
-  if (!email || !password) throw new Error('Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD first');
-  if (password.length < 10 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password))
-    throw new Error('SEED_ADMIN_PASSWORD needs 10+ chars with upper case, lower case and a digit');
-
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) console.log('Super Admin already exists, left unchanged:', email);
-  else {
-    await db.user.create({
-      data: {
-        email, name: 'Super Admin', role: 'SUPER_ADMIN', status: 'ACTIVE', emailVerified: true,
-        passwordHash: await bcrypt.hash(password, 12), mustChangePassword: true,
-      },
-    });
-    console.log('Created Super Admin:', email, '(password change + 2FA setup are forced at first sign-in)');
-  }
-
-  const services = [
-    { key: 'EMAIL_OTP', unitPrice: '0.004', billOn: 'SUBMITTED' },
-    { key: 'WHATSAPP_OTP', unitPrice: '0.02', billOn: 'DELIVERED' },
-    { key: 'EMAIL_VALIDATION', unitPrice: '0.002', billOn: 'SUBMITTED' },
-  ] as const;
-  for (const s of services) {
-    await db.serviceConfig.upsert({ where: { key: s.key }, update: {}, create: { key: s.key, state: 'DISABLED', unitPrice: s.unitPrice, billOn: s.billOn } });
-  }
-
-  if ((await db.package.count()) === 0) {
-    await db.package.createMany({
-      data: [
-        { name: 'Starter', priceUsd: '2.99', emailQuota: 600, whatsappQuota: 100, validationQuota: 1000, sortOrder: 1 },
-        { name: 'Growth', priceUsd: '9.99', emailQuota: 2500, whatsappQuota: 400, validationQuota: 5000, sortOrder: 2 },
-        { name: 'Business', priceUsd: '29.99', emailQuota: 9000, whatsappQuota: 1500, validationQuota: 20000, sortOrder: 3 },
-      ],
-    });
-    console.log('Created starter packages (edit them in Admin > Packages)');
-  }
-  console.log('Done. Services start DISABLED: enable them in Admin > Services after configuring an email provider / WhatsApp device.');
-}
-
-main().catch((e) => { console.error(e.message); process.exit(1); }).finally(() => db.$disconnect());
+import {PrismaClient,Role,ServiceType} from '@prisma/client'; import bcrypt from 'bcryptjs';
+const p=new PrismaClient();
+const countries=[['EG','Egypt','مصر','🇪🇬','+20','EGP',2,1],['SA','Saudi Arabia','السعودية','🇸🇦','+966','SAR',3,2],['AE','United Arab Emirates','الإمارات','🇦🇪','+971','AED',3,3],['US','United States','الولايات المتحدة','🇺🇸','+1','USD',4,4],['GB','United Kingdom','المملكة المتحدة','🇬🇧','+44','GBP',4,5],['DE','Germany','ألمانيا','🇩🇪','+49','EUR',4,6],['FR','France','فرنسا','🇫🇷','+33','EUR',4,7],['IN','India','الهند','🇮🇳','+91','INR',2,8],['TR','Turkey','تركيا','🇹🇷','+90','TRY',2.5,9],['CA','Canada','كندا','🇨🇦','+1','CAD',4,10],['HK','Hong Kong','هونج كونج','🇭🇰','+852','HKD',3,11]] as const;
+async function main(){const email=process.env.BOOTSTRAP_ADMIN_EMAIL||'admin@otpprovider.local'; const pass=process.env.BOOTSTRAP_ADMIN_PASSWORD||'ChangeMe!2026'; const existing=await p.user.findUnique({where:{email}}); if(!existing){const hash=await bcrypt.hash(pass,12); await p.user.create({data:{email,name:'Super Administrator',passwordHash:hash,role:Role.SUPER_ADMIN,credits:100000,emailVerifiedAt:new Date()}});} for(const c of countries){await p.country.upsert({where:{code:c[0]},update:{},create:{code:c[0],nameEn:c[1],nameAr:c[2],flag:c[3],phoneCode:c[4],currency:c[5],whatsappCredits:c[6],emailCredits:(c[6] as number)+.5,sortOrder:c[7]}})}; const packs=[['Starter','البداية',1000,0,10],['Business','الأعمال',10000,1000,75],['Professional','احترافي',50000,10000,300],['Enterprise','مؤسسات',250000,75000,1000]] as const; if(await p.package.count()===0) for(let i=0;i<packs.length;i++){const x=packs[i]; await p.package.create({data:{nameEn:x[0],nameAr:x[1],credits:x[2],bonusCredits:x[3],price:x[4],sortOrder:i,popular:i===1}})}; if(await p.provider.count()===0) for(const [name,type] of [['WhatsApp Official',ServiceType.WHATSAPP],['SMTP / Email',ServiceType.EMAIL]] as const) await p.provider.create({data:{name,service:type}}); if(await p.paymentMethod.count()===0) for(const x of [['Cards','card'],['PayPal','paypal'],['Binance Personal','binance_personal'],['Binance Business','binance_business'],['USDT','usdt'],['Bitcoin','bitcoin'],['Bank Transfer','bank'],['Manual Payment','manual']]) await p.paymentMethod.create({data:{name:x[0],type:x[1]}}); if(await p.newsItem.count()===0) await p.newsItem.create({data:{titleEn:'OTPProvider — Hong Kong Headquarters • Verification infrastructure for modern products',titleAr:'OTPProvider — المقر الرئيسي هونج كونج • بنية تحقق متقدمة للمنتجات الحديثة',sortOrder:1}}); }
+main().finally(()=>p.$disconnect());
